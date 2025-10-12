@@ -1,14 +1,19 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use common::surface::{Surface, format::RGBA8};
+
+pub struct Rasterizer {
+    surface: Surface,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl Rasterizer {
+    pub fn new(surface: Surface) -> Self {
+        Self { surface }
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    pub fn clear(&mut self) {
+        for y in 0..self.surface.height() {
+            for x in 0..self.surface.width() {
+                *self.surface.get_mut(x, y) = RGBA8::BLACK;
+            }
+        }
     }
 }
