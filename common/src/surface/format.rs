@@ -30,3 +30,12 @@ impl RGBA8 {
         Self { r, g, b, a }
     }
 }
+
+impl From<glam::Vec3> for RGBA8 {
+    fn from(value: glam::Vec3) -> Self {
+        let r = (value.x * 255.0).round() as u8;
+        let g = (value.y * 255.0).round() as u8;
+        let b = (value.z * 255.0).round() as u8;
+        Self::new(r, g, b, 255)
+    }
+}

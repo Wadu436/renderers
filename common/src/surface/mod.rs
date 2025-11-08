@@ -38,4 +38,10 @@ impl Surface {
     pub fn get_mut(&mut self, x: u32, y: u32) -> &mut RGBA8 {
         &mut self.buffer[y as usize * self.width as usize + x as usize]
     }
+
+    pub fn clear(&mut self, color: RGBA8) {
+        for pixel in &mut self.buffer {
+            *pixel = color;
+        }
+    }
 }

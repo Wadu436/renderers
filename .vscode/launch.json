@@ -1,0 +1,58 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug executable 'cli'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["run", "--bin=cli", "--package=cli"]
+      },
+      "args": []
+    },
+    {
+      "name": "Debug unit tests in library 'cli'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["test", "--package=cli"]
+      }
+    },
+    {
+      "name": "Debug executable 'cli'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["run", "--bin=cli", "--package=cli"]
+      },
+      "args": []
+    },
+    {
+      "name": "Debug unit tests in executable 'cli'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["test", "--bin=cli", "--package=cli"]
+      }
+    },
+    {
+      "name": "Debug unit tests in library 'common'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["test", "--package=common"]
+      }
+    },
+    {
+      "name": "Debug unit tests in library 'rasterizer'",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["test", "--package=rasterizer"]
+      }
+    }
+  ]
+}

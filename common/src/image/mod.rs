@@ -1,4 +1,5 @@
 pub mod jxl;
+pub mod png;
 pub mod ppm;
 
 use std::io::{self, Write};

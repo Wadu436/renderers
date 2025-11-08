@@ -1,9 +1,13 @@
 [workspace]
 resolver = "3"
-members = ["cli", "common", "rasterizer"]
+members = ["cli", "common", "cpu-ray-tracer", "cpu-rasterizer"]
 
 [profile.dev.package."*"]
 opt-level = 3
 
 [profile.dev]
-opt-level = 1
+opt-level = 0
+
+[workspace.dependencies]
+glam = "0.30.9"
+bytes = "1.10.1"

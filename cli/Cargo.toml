@@ -4,5 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-color-eyre = "0.6.5"
+glam = { workspace = true }
+bytes = { workspace = true }
 common = { path = "../common" }
+cpu-rasterizer = { path = "../cpu-rasterizer" }
+cpu-ray-tracer = { path = "../cpu-ray-tracer" }
+color-eyre = "0.6.5"
+clap = { version = "4.5.51", features = ["derive"] }
