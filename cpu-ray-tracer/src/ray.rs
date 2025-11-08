@@ -4,10 +4,6 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn intersect(&self, triangle: &common::model::triangle::Triangle) -> Option<f32> {
-        triangle.intersect(self.origin, self.direction)
-    }
-
     pub fn new(origin: glam::Vec3, direction: glam::Vec3) -> Self {
         Self {
             origin,
@@ -19,5 +15,9 @@ impl Ray {
         let origin = camera.origin();
         let direction = camera.ndc_to_viewing_direction(ndc);
         Self::new(origin, direction)
+    }
+
+    pub fn at_t(&self, t: f32) -> glam::Vec3 {
+        self.origin + t * self.direction
     }
 }

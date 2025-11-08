@@ -5,7 +5,8 @@ use color_eyre::eyre::Result;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
+
     let args = Args::parse();
-    eprintln!("{:?}", args);
+
     run(args)
 }

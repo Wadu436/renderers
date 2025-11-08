@@ -14,6 +14,15 @@
       "args": []
     },
     {
+      "name": "Debug cpu-ray-tracer",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["run", "--bin=cli", "--package=cli"]
+      },
+      "args": ["-f", "jpeg-xl", "-r", "cpu-ray-tracer"]
+    },
+    {
       "name": "Debug unit tests in library 'cli'",
       "type": "lldb",
       "request": "launch",

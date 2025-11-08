@@ -1,11 +1,18 @@
+use crate::{bvh::Bvh, intersect::Intersect};
+
+mod bvh;
+mod intersect;
 mod ray;
+
 pub struct CpuRayTracer {
     scene: common::scene::Scene,
+    bvh: crate::bvh::Bvh,
 }
 
 impl CpuRayTracer {
     pub fn new(scene: common::scene::Scene) -> Self {
-        Self { scene }
+        let bvh = Bvh::from_scene(&scene);
+        Self { scene, bvh }
     }
 
     pub fn render(&self, surface: &mut common::surface::Surface) {
@@ -16,6 +23,9 @@ impl CpuRayTracer {
 
         let camera = self.scene.camera();
 
+        let x = 200;
+        let y = 150;
+
         for y in 0..height {
             for x in 0..width {
                 let ndc = glam::Vec2::new(
@@ -25,18 +35,10 @@ impl CpuRayTracer {
                     + glam::Vec2::new(-1.0, 1.0);
                 let ray = ray::Ray::from_camera(camera, ndc);
 
-                let mut closest_intersection = f32::INFINITY;
-                for mesh in self.scene.meshes() {
-                    for triangle in &mesh.triangles {
-                        if let Some(t) = ray.intersect(triangle) {
-                            if t < closest_intersection {
-                                // Simple shading based on angle to light
-                                let intensity = triangle.normal.dot(-ray.direction).clamp(0.0, 1.0);
-                                *surface.get_mut(x, y) = (glam::Vec3::ONE * intensity).into();
-                                closest_intersection = t;
-                            }
-                        }
-                    }
+                if let Some(intersection) = self.bvh.intersect(&ray) {
+                    // Simple shading based on angle to lightray
+                    let intensity = intersection.normal.dot(-ray.direction).clamp(0.0, 1.0);
+                    *surface.get_mut(x, y) = (glam::Vec3::ONE * intensity).into();
                 }
             }
         }

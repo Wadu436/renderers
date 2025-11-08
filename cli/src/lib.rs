@@ -7,7 +7,7 @@ use std::io::{Write, stdout};
 use common::{
     camera::Camera,
     image::{ImageFormat, jxl::JpegXl, ppm},
-    model::triangle::Mesh,
+    model::triangle::{Mesh, Triangle},
     scene::SceneBuilder,
     surface::Surface,
 };
@@ -22,12 +22,66 @@ pub fn run(args: arguments::Args) -> Result<()> {
     let height = 300;
     let mut surface = Surface::new(width, height);
 
+    // Debug scene
+    let debug_scene = {
+        // old single triangle replaced with a hexagon made of 6 triangles
+        let hex_radius = 1.0;
+        let vertices: Vec<glam::Vec3> = (0..6)
+            .map(|i| {
+                let angle = i as f32 * (f32::consts::PI * 2.0) / 6.0;
+                glam::Vec3::new(hex_radius * angle.cos(), hex_radius * angle.sin(), 0.0)
+            })
+            .collect();
+
+        let center = glam::Vec3::ZERO;
+        let mut triangles = Vec::with_capacity(6);
+        for i in 0..6 {
+            let v1 = vertices[i];
+            let v2 = vertices[(i + 1) % 6];
+            triangles.push(Triangle {
+                normal: glam::Vec3::Z,
+                // triangle fan: center -> v2 -> v1
+                v1: center,
+                v2,
+                v3: v1,
+            });
+        }
+
+        let mesh = Mesh {
+            triangles,
+            center,
+            bounding_box: (
+                glam::Vec3::new(-hex_radius, -hex_radius, 0.0),
+                glam::Vec3::new(hex_radius, hex_radius, 0.0),
+            ),
+        };
+
+        let camera = Camera::look_at(
+            glam::Vec3::new(0.0, 0.0, 5.0),
+            center,
+            glam::Vec3::Y,
+            60.0,
+            width as f32 / height as f32,
+        );
+        SceneBuilder::new()
+            .with_camera(camera)
+            .add_mesh(mesh)
+            .build()
+    };
+
     // Render
     let mesh = bytes::Bytes::from(std::fs::read("./assets/teapot.stl")?);
     let mesh = Mesh::load_stl(mesh);
 
-    let camera = Camera::look_at(
+    let teapot_camera = Camera::look_at(
         glam::Vec3::new(10.0, 10.0, 10.0),
+        mesh.center,
+        glam::Vec3::Z,
+        80.0,
+        width as f32 / height as f32,
+    );
+    let cube_camera = Camera::look_at(
+        glam::Vec3::new(40.0, 40.0, 40.0),
         mesh.center,
         glam::Vec3::Z,
         80.0,
@@ -35,16 +89,17 @@ pub fn run(args: arguments::Args) -> Result<()> {
     );
 
     let scene = SceneBuilder::new()
-        .with_camera(camera)
+        .with_camera(teapot_camera)
         .add_mesh(mesh)
         .build();
+    // let scene = debug_scene;
 
     match args.renderer {
-        arguments::renderer::Renderer::Rasterizer => {
+        arguments::renderer::Renderer::CpuRasterizer => {
             let renderer = CpuRasterizer::new(scene);
             renderer.render(&mut surface);
         }
-        arguments::renderer::Renderer::RayTracer => {
+        arguments::renderer::Renderer::CpuRayTracer => {
             let renderer = CpuRayTracer::new(scene);
             renderer.render(&mut surface);
         }
