@@ -1,4 +1,5 @@
 use core::f32;
+use std::num::NonZeroU32;
 
 use common::model::triangle::Triangle;
 
@@ -77,7 +78,8 @@ impl BvhBuilder {
                 },
             }
         } else {
-            let (left_indices, right_indices) = split_along_optimal_axis(&self.primitives, indices);
+            let (left_indices, right_indices, split_axis) =
+                split_along_optimal_axis(&self.primitives, indices);
             let left_child = Box::new(self.build_node(left_indices));
             let right_child = Box::new(self.build_node(right_indices));
 
@@ -87,6 +89,7 @@ impl BvhBuilder {
                 kind: BvhBuilderNodeKind::Internal {
                     first_child: left_child,
                     second_child: right_child,
+                    split_axis,
                 },
             }
         }
@@ -107,6 +110,7 @@ enum BvhBuilderNodeKind<'a> {
     Internal {
         first_child: Box<BvhBuilderNode<'a>>,
         second_child: Box<BvhBuilderNode<'a>>,
+        split_axis: usize,
     },
 }
 
@@ -118,6 +122,7 @@ impl<'a> BvhBuilderNode<'a> {
             BvhBuilderNodeKind::Internal {
                 first_child,
                 second_child,
+                ..
             } => first_child.size() + second_child.size(),
         };
         return 1 + size_children;
@@ -136,8 +141,8 @@ impl<'a> BvhBuilderNode<'a> {
                 let node = BvhNode {
                     bounding_box: self.bounding_box,
                     kind: BvhNodeKind::Leaf {
-                        triangle_offset,
-                        num_triangles: 2,
+                        triangle_offset: triangle_offset as u32,
+                        num_triangles: NonZeroU32::new(2).unwrap(),
                     },
                 };
                 nodes.push(node);
@@ -151,8 +156,8 @@ impl<'a> BvhBuilderNode<'a> {
                 let node = BvhNode {
                     bounding_box: self.bounding_box,
                     kind: BvhNodeKind::Leaf {
-                        triangle_offset,
-                        num_triangles: 1,
+                        triangle_offset: triangle_offset as u32,
+                        num_triangles: NonZeroU32::new(1).unwrap(),
                     },
                 };
                 nodes.push(node);
@@ -160,12 +165,14 @@ impl<'a> BvhBuilderNode<'a> {
             BvhBuilderNodeKind::Internal {
                 first_child,
                 second_child,
+                split_axis,
             } => {
                 // Already put a node in the vector
                 let node_index = nodes.len();
                 nodes.push(BvhNode {
                     kind: BvhNodeKind::Internal {
                         second_child_offset: 0, // We don't know the offset yet. We'll set it later
+                        split_axis: split_axis as u8,
                     },
                     bounding_box: self.bounding_box,
                 });
@@ -176,9 +183,10 @@ impl<'a> BvhBuilderNode<'a> {
 
                 if let BvhNodeKind::Internal {
                     second_child_offset,
+                    ..
                 } = &mut nodes[node_index].kind
                 {
-                    *second_child_offset = second_child_index // Set the offset now that we've constructed the children
+                    *second_child_offset = second_child_index as u32 // Set the offset now that we've constructed the children
                 } else {
                     unreachable!()
                 }
@@ -191,9 +199,10 @@ impl<'a> BvhBuilderNode<'a> {
 fn split_along_optimal_axis(
     primitives: &[BvhPrimitive],
     indices: Vec<usize>,
-) -> (Vec<usize>, Vec<usize>) {
+) -> (Vec<usize>, Vec<usize>, usize) {
     let best_score = f32::MAX;
     let mut best_indices = None;
+
     for axis in 0..=2 {
         let (indices_left, indices_right) = split_along_axis(primitives, indices.clone(), axis);
         let bounding_box_left =
@@ -202,7 +211,7 @@ fn split_along_optimal_axis(
             BoundingBox::from_iter(indices_right.iter().map(|&i| &primitives[i].bounding_box));
         let score = bounding_box_left.area() + bounding_box_right.area();
         if score < best_score {
-            best_indices = Some((indices_left, indices_right))
+            best_indices = Some((indices_left, indices_right, axis));
         }
     }
 
