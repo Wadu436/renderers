@@ -2,5 +2,5 @@ target
 *.jxl
 
 # flamegraph stuff
-flamegraph.svg
+flamegraph*.svg
 perf.data*

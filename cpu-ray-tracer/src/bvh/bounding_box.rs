@@ -6,7 +6,7 @@ pub struct BoundingBox {
     pub max: glam::Vec3,
 }
 impl BoundingBox {
-    pub fn intersect(&self, ray: &crate::ray::Ray) -> bool {
+    pub fn intersect(&self, ray: &crate::ray::Ray) -> Option<f32> {
         // https://en.wikipedia.org/wiki/Slab_method
         let inv_dir = 1.0 / ray.direction;
 
@@ -19,7 +19,11 @@ impl BoundingBox {
         let t_close = t_close_slabs.max_element();
         let t_far = t_far_slabs.min_element();
 
-        t_close > 0.0 && t_close <= t_far
+        if t_close > 0.0 && t_close <= t_far {
+            Some(t_close)
+        } else {
+            None
+        }
     }
 }
 

@@ -36,6 +36,6 @@ impl Bvh {
 impl Intersect for Bvh {
     fn intersect(&self, ray: &crate::ray::Ray) -> Option<crate::intersect::Intersection> {
         // Check intersection with the X-axis surfaces
-        self.root.intersect(&self.triangles, ray)
+        self.root.intersect(&self.triangles, ray, f32::MAX)
     }
 }
