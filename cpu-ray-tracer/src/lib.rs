@@ -23,8 +23,8 @@ impl CpuRayTracer {
 
         let camera = self.scene.camera();
 
-        let x = 200;
-        let y = 150;
+        // let x = 200;
+        // let y = 150;
 
         for y in 0..height {
             for x in 0..width {

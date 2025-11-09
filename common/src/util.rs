@@ -9,6 +9,6 @@ impl<T: Buf> BufGlamExt for T {
         let x = self.get_f32_le();
         let y = self.get_f32_le();
         let z = self.get_f32_le();
-        return glam::Vec3 { x, y, z };
+        glam::Vec3 { x, y, z }
     }
 }

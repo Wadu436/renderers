@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy)]
 pub struct Intersection {
     pub t: f32,
+    #[allow(dead_code)]
     pub point: glam::Vec3,
     pub normal: glam::Vec3,
 }

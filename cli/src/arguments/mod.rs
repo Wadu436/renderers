@@ -11,4 +11,7 @@ pub struct Args {
 
     #[arg(short, long, value_enum)]
     pub renderer: renderer::Renderer,
+
+    #[arg(short, long, default_value_t = false)]
+    pub debug: bool,
 }

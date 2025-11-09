@@ -7,7 +7,7 @@ pub struct BoundingBox {
 }
 impl BoundingBox {
     pub fn intersect(&self, ray: &crate::ray::Ray) -> bool {
-        return self.intersect_naive(ray);
+        self.intersect_naive(ray)
     }
 
     pub fn intersect_naive(&self, ray: &crate::ray::Ray) -> bool {
@@ -53,7 +53,7 @@ impl BoundingBox {
             }
         }
 
-        return false;
+        false
     }
 }
 

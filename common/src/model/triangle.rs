@@ -43,9 +43,9 @@ impl Triangle {
 
         if t > f32::EPSILON {
             // ray intersection
-            return Some(t);
+            Some(t)
         } else {
-            return None;
+            None
         }
     }
 }

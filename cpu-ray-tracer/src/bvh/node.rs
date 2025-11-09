@@ -37,8 +37,10 @@ impl BvhNode {
                 if size.y >= size.z { [0, 1] } else { [0, 2] }
             } else if size.y >= size.x && size.y >= size.z {
                 if size.x >= size.z { [1, 0] } else { [1, 2] }
+            } else if size.x >= size.y {
+                [2, 0]
             } else {
-                if size.x >= size.y { [2, 0] } else { [2, 1] }
+                [2, 1]
             };
             for &axis in sort_axes.iter().rev() {
                 triangles.sort_by_axis(axis);
@@ -72,12 +74,11 @@ impl BvhNode {
                 if bounding_box.intersect(ray) {
                     let mut closest_intersection: Option<Intersection> = None;
                     for t in &triangles[*start_index..*end_index] {
-                        if let Some(intersection) = Intersect::intersect(&t.triangle, ray) {
-                            if intersection.t
+                        if let Some(intersection) = Intersect::intersect(&t.triangle, ray)
+                            && intersection.t
                                 < closest_intersection.map(|i| i.t).unwrap_or(f32::MAX)
-                            {
-                                closest_intersection = Some(intersection);
-                            }
+                        {
+                            closest_intersection = Some(intersection);
                         }
                     }
                     closest_intersection
