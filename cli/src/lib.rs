@@ -65,12 +65,12 @@ fn debug_scene(surface: &Surface) -> Scene {
         .build()
 }
 
-fn load_scene(surface: &Surface) -> Result<Scene> {
+fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Scene> {
     let mesh = bytes::Bytes::from(std::fs::read(SCENE.0)?);
     let mesh = Mesh::load_stl(mesh);
 
     let camera = Camera::look_at(
-        glam::Vec3::new(SCENE.1, SCENE.1, SCENE.1),
+        camera_origin.unwrap_or(glam::Vec3::new(SCENE.1, SCENE.1, SCENE.1)),
         mesh.center,
         glam::Vec3::Z,
         80.0,
@@ -90,11 +90,17 @@ pub fn run(args: arguments::Args) -> Result<()> {
     let mut surface = Surface::new(width, height);
 
     // Render
+    let camera_option =
+        if let (Some(x), Some(y), Some(z)) = (args.camera_x, args.camera_y, args.camera_z) {
+            Some(glam::Vec3::new(x, y, z))
+        } else {
+            None
+        };
 
     let scene = if args.debug {
         debug_scene(&surface)
     } else {
-        load_scene(&surface)?
+        load_scene(&surface, camera_option)?
     };
 
     match args.renderer {

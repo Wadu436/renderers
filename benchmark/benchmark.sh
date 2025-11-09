@@ -20,7 +20,7 @@ for renderer in "${renderers[@]}"; do
 
     hyperfine --warmup 2 \
         --export-json "$JSON_FILE" \
-        "$BIN --renderer $renderer --format ppm > $OUTPUT_FILE 2> $LOG_FILE"
+        "$BIN --renderer $renderer --format ppm --camera-x 10 --camera-y 10 --camera-z 10 > $OUTPUT_FILE 2> $LOG_FILE"
 
     magick $OUTPUT_FILE $OUTPUT_FILE_PNG 
 
