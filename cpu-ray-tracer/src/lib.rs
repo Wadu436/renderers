@@ -1,17 +1,22 @@
-use crate::{bvh::Bvh, intersect::Intersect};
+use crate::{
+    bvh2::{Bvh, builder::BvhBuilder},
+    intersect::Intersect,
+};
 
 mod bvh;
+mod bvh2;
 mod intersect;
 mod ray;
 
 pub struct CpuRayTracer {
     scene: common::scene::Scene,
-    bvh: crate::bvh::Bvh,
+    bvh: Bvh,
 }
 
 impl CpuRayTracer {
     pub fn new(scene: common::scene::Scene) -> Self {
-        let bvh = Bvh::from_scene(&scene);
+        let bvh =
+            BvhBuilder::new(scene.meshes().iter().flat_map(|m| &m.triangles).cloned()).build();
         Self { scene, bvh }
     }
 

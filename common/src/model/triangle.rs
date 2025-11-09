@@ -3,11 +3,12 @@ use bytes::{Buf, Bytes};
 use glam::Vec3;
 
 #[derive(Debug, Clone, Copy)]
+// 48 bytes
 pub struct Triangle {
-    pub v1: glam::Vec3,
-    pub v2: glam::Vec3,
-    pub v3: glam::Vec3,
-    pub normal: glam::Vec3,
+    pub v1: glam::Vec3,     // 12 bytes
+    pub v2: glam::Vec3,     // 12 bytes
+    pub v3: glam::Vec3,     // 12 bytes
+    pub normal: glam::Vec3, // 12 bytes
 }
 
 impl Triangle {
