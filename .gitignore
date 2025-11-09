@@ -1,2 +1,6 @@
 target
 *.jxl
+
+# flamegraph stuff
+flamegraph.svg
+perf.data*

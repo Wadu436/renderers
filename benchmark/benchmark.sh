@@ -14,7 +14,7 @@ renderers=("cpu-ray-tracer")
 for renderer in "${renderers[@]}"; do
     echo "Benchmarking $renderer..."
     OUTPUT_FILE="$RESULTS_DIR/${renderer}_benchmark.ppm"
-    OUTPUT_FILE_PNG="$RESULTS_DIR/${renderer}_benchmark.ppm"
+    OUTPUT_FILE_PNG="$RESULTS_DIR/${renderer}_benchmark.png"
     LOG_FILE="$RESULTS_DIR/${renderer}_run.log"
     JSON_FILE="$RESULTS_DIR/${renderer}_hyperfine.json"
 
