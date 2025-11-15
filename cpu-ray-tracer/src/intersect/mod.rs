@@ -12,12 +12,12 @@ pub trait Intersect {
 
 impl Intersect for common::model::triangle::Triangle {
     fn intersect(&self, ray: &crate::ray::Ray) -> Option<crate::intersect::Intersection> {
-        if let Some(t) = self.intersect(ray.origin, ray.direction) {
+        if let Some((t, u, v)) = self.intersect(ray.origin, ray.direction) {
             let point = ray.origin + ray.direction * t;
             Some(crate::intersect::Intersection {
                 t,
                 point,
-                normal: self.normal,
+                normal: self.v1.normal * (1.0 - u - v) + self.v2.normal * u + self.v3.normal * v,
             })
         } else {
             None

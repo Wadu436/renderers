@@ -34,8 +34,8 @@ impl<'a> FromIterator<&'a Triangle> for BoundingBox {
 
         for triangle in iter {
             for &vertex in &[triangle.v1, triangle.v2, triangle.v3] {
-                min = min.min(vertex);
-                max = max.max(vertex);
+                min = min.min(vertex.position);
+                max = max.max(vertex.position);
             }
         }
 

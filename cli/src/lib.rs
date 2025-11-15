@@ -7,7 +7,7 @@ use std::io::{Write, stdout};
 use common::{
     camera::Camera,
     image::{ImageFormat, jxl::JpegXl, ppm},
-    model::triangle::{Mesh, Triangle},
+    model::triangle::{Mesh, Triangle, Vertex},
     scene::{Scene, SceneBuilder},
     surface::Surface,
 };
@@ -35,11 +35,19 @@ fn debug_scene(surface: &Surface) -> Scene {
         let v1 = vertices[i];
         let v2 = vertices[(i + 1) % 6];
         triangles.push(Triangle {
-            normal: glam::Vec3::Z,
             // triangle fan: center -> v2 -> v1
-            v1: center,
-            v2,
-            v3: v1,
+            v1: Vertex {
+                position: center,
+                normal: glam::Vec3::Z,
+            },
+            v2: Vertex {
+                position: v2,
+                normal: glam::Vec3::Z,
+            },
+            v3: Vertex {
+                position: v1,
+                normal: glam::Vec3::Z,
+            },
         });
     }
 

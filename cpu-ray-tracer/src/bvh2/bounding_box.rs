@@ -37,8 +37,16 @@ impl BoundingBox {
 
 impl From<&Triangle> for BoundingBox {
     fn from(value: &Triangle) -> Self {
-        let min = value.v1.min(value.v2).min(value.v3);
-        let max = value.v1.max(value.v2).max(value.v3);
+        let min = value
+            .v1
+            .position
+            .min(value.v2.position)
+            .min(value.v3.position);
+        let max = value
+            .v1
+            .position
+            .max(value.v2.position)
+            .max(value.v3.position);
         return Self { min, max };
     }
 }
