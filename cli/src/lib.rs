@@ -85,8 +85,8 @@ fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Sc
 
 pub fn run(args: arguments::Args) -> Result<()> {
     // Set up
-    let width = 400;
-    let height = 300;
+    let width = 1600;
+    let height = 900;
     let mut surface = Surface::new(width, height);
 
     // Render
@@ -130,6 +130,8 @@ pub fn run(args: arguments::Args) -> Result<()> {
             ppm.save(&surface, &mut stdout)?;
             stdout.flush()?;
         }
+
+        OutputFormat::None => {}
     }
 
     Ok(())

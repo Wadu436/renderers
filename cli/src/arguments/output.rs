@@ -4,4 +4,5 @@ use clap::ValueEnum;
 pub enum OutputFormat {
     JpegXl,
     Ppm,
+    None,
 }

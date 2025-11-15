@@ -4,6 +4,8 @@ BENCHMARK_DIR="$(dirname "${BASH_SOURCE[0]}")"
 RUN_ID="$(date +%Y%m%d_%H%M%S)"
 RESULTS_DIR="$BENCHMARK_DIR/results/$RUN_ID"
 
+
+
 cargo build --release
 mkdir -p "$RESULTS_DIR"
 
@@ -18,9 +20,12 @@ for renderer in "${renderers[@]}"; do
     LOG_FILE="$RESULTS_DIR/${renderer}_run.log"
     JSON_FILE="$RESULTS_DIR/${renderer}_hyperfine.json"
 
+    # Generate a picture for verifying the output
+    $BIN --renderer $renderer --format ppm --camera-x 10 --camera-y 10 --camera-z 10 > $OUTPUT_FILE 2> $LOG_FILE
+
     hyperfine --warmup 2 \
         --export-json "$JSON_FILE" \
-        "$BIN --renderer $renderer --format ppm --camera-x -10 --camera-y -10 --camera-z 10 > $OUTPUT_FILE 2> $LOG_FILE"
+        "$BIN --renderer $renderer --format none --camera-x 10 --camera-y 10 --camera-z 10 2> $LOG_FILE"
 
     magick $OUTPUT_FILE $OUTPUT_FILE_PNG 
 

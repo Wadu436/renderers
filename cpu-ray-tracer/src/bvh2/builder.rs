@@ -78,8 +78,7 @@ impl BvhBuilder {
                 },
             }
         } else {
-            let (left_indices, right_indices, split_axis) =
-                split_along_optimal_axis(&self.primitives, indices);
+            let (left_indices, right_indices) = split_along_optimal_axis(&self.primitives, indices);
             let left_child = Box::new(self.build_node(left_indices));
             let right_child = Box::new(self.build_node(right_indices));
 
@@ -89,7 +88,6 @@ impl BvhBuilder {
                 kind: BvhBuilderNodeKind::Internal {
                     first_child: left_child,
                     second_child: right_child,
-                    split_axis,
                 },
             }
         }
@@ -110,7 +108,6 @@ enum BvhBuilderNodeKind<'a> {
     Internal {
         first_child: Box<BvhBuilderNode<'a>>,
         second_child: Box<BvhBuilderNode<'a>>,
-        split_axis: usize,
     },
 }
 
@@ -165,28 +162,22 @@ impl<'a> BvhBuilderNode<'a> {
             BvhBuilderNodeKind::Internal {
                 first_child,
                 second_child,
-                split_axis,
             } => {
                 // Already put a node in the vector
                 let node_index = nodes.len();
                 nodes.push(BvhNode {
                     kind: BvhNodeKind::Internal {
-                        second_child_offset: 0, // We don't know the offset yet. We'll set it later
-                        split_axis: split_axis as u8,
+                        right_offset: 0, // We don't know the offset yet. We'll set it later
                     },
                     bounding_box: self.bounding_box,
                 });
                 first_child.flatten(triangles, nodes);
                 // get the index of the 2nd child
-                let second_child_index = nodes.len();
+                let right_index = nodes.len();
                 second_child.flatten(triangles, nodes);
 
-                if let BvhNodeKind::Internal {
-                    second_child_offset,
-                    ..
-                } = &mut nodes[node_index].kind
-                {
-                    *second_child_offset = second_child_index as u32 // Set the offset now that we've constructed the children
+                if let BvhNodeKind::Internal { right_offset, .. } = &mut nodes[node_index].kind {
+                    *right_offset = right_index as u32 // Set the offset now that we've constructed the children
                 } else {
                     unreachable!()
                 }
@@ -199,7 +190,7 @@ impl<'a> BvhBuilderNode<'a> {
 fn split_along_optimal_axis(
     primitives: &[BvhPrimitive],
     indices: Vec<usize>,
-) -> (Vec<usize>, Vec<usize>, usize) {
+) -> (Vec<usize>, Vec<usize>) {
     let best_score = f32::MAX;
     let mut best_indices = None;
 
@@ -211,7 +202,7 @@ fn split_along_optimal_axis(
             BoundingBox::from_iter(indices_right.iter().map(|&i| &primitives[i].bounding_box));
         let score = bounding_box_left.area() + bounding_box_right.area();
         if score < best_score {
-            best_indices = Some((indices_left, indices_right, axis));
+            best_indices = Some((indices_left, indices_right));
         }
     }
 

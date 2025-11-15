@@ -25,19 +25,17 @@ pub struct BvhNode {
 
 enum BvhNodeKind {
     Internal {
-        second_child_offset: u32,
-        split_axis: u8, // X, Y, or Z
-    }, // 8 bytes
+        right_offset: u32,
+    }, // 4 bytes
     Leaf {
         triangle_offset: u32,
         num_triangles: NonZero<u32>,
     }, // 8 bytes
 }
 
-impl Intersect for Bvh {
-    fn intersect(&self, ray: &crate::ray::Ray) -> Option<Intersection> {
-        let mut stack: Vec<usize> = Vec::with_capacity(32); // Vec of offsets we should visit
-        stack.push(0); // Start with the root node
+impl Bvh {
+    fn intersect_loop(&self, ray: &crate::ray::Ray) -> Option<Intersection> {
+        let mut stack: Vec<(f32, u32)> = Vec::with_capacity(16); // Vec of offsets we should visit
 
         let mut closest_intersection: Intersection = Intersection {
             t: f32::INFINITY,
@@ -45,66 +43,57 @@ impl Intersect for Bvh {
             normal: Vec3::ZERO,
         };
 
-        // Idea: use a priority queue instead of a stack to visit closer nodes first
+        // Intersect the root node
+        let mut next_item = Some((0.0, 0_u32));
 
-        while let Some(node_index) = stack.pop() {
-            let node = &self.nodes[node_index];
-            if let Some(t) = node.bounding_box.intersect(ray)
-                && t < closest_intersection.t
-            {
-                match node.kind {
-                    BvhNodeKind::Internal {
-                        second_child_offset,
-                        split_axis,
-                    } => {
-                        // Push the children on the stack
-                        let first_child_offset = node_index + 1;
-                        let second_child_offset = second_child_offset as usize;
+        while let Some((distance, node_index)) = next_item.take().or_else(|| stack.pop()) {
+            if distance > closest_intersection.t {
+                continue;
+            }
+            let node = &self.nodes[node_index as usize];
+            match node.kind {
+                BvhNodeKind::Internal { right_offset, .. } => {
+                    // Push the children on the stack
+                    let left_offset = node_index + 1;
 
-                        let first_child = &self.nodes[first_child_offset];
-                        let second_child = &self.nodes[second_child_offset];
+                    let left = &self.nodes[left_offset as usize];
+                    let right = &self.nodes[right_offset as usize];
 
-                        let first_child_distance = (first_child.bounding_box.min
-                            [split_axis as usize]
-                            - ray.origin[split_axis as usize])
-                            .abs()
-                            .min(
-                                (first_child.bounding_box.max[split_axis as usize]
-                                    - ray.origin[split_axis as usize])
-                                    .abs(),
-                            );
-                        let second_child_distance = (second_child.bounding_box.min
-                            [split_axis as usize]
-                            - ray.origin[split_axis as usize])
-                            .abs()
-                            .min(
-                                (second_child.bounding_box.max[split_axis as usize]
-                                    - ray.origin[split_axis as usize])
-                                    .abs(),
-                            );
+                    let left_distance = left.bounding_box.intersect(ray);
+                    let right_distance = right.bounding_box.intersect(ray);
 
-                        if first_child_distance < second_child_distance {
-                            stack.push(second_child_offset); // Second child
-                            stack.push(first_child_offset); // First child
-                        } else {
-                            stack.push(first_child_offset); // First child
-                            stack.push(second_child_offset); // Second child
-                        }
-                    }
-                    BvhNodeKind::Leaf {
-                        triangle_offset,
-                        num_triangles,
-                    } => {
-                        // Intersect with some triangles
-                        for i in triangle_offset as usize
-                            ..(triangle_offset + num_triangles.get()) as usize
-                        {
-                            let triangle = &self.triangles[i];
-                            if let Some(intersection) = Intersect::intersect(triangle, ray)
-                                && intersection.t < closest_intersection.t
-                            {
-                                closest_intersection = intersection;
+                    match (left_distance, right_distance) {
+                        (Some(left_t), Some(right_t)) => {
+                            if left_t < right_t {
+                                stack.push((right_t, right_offset));
+                                next_item = Some((left_t, left_offset));
+                            } else {
+                                stack.push((left_t, left_offset));
+                                next_item = Some((right_t, right_offset))
                             }
+                        }
+                        (Some(t), _) => {
+                            next_item = Some((t, left_offset));
+                        }
+                        (_, Some(t)) => {
+                            next_item = Some((t, right_offset));
+                        }
+                        _ => {}
+                    }
+                }
+                BvhNodeKind::Leaf {
+                    triangle_offset,
+                    num_triangles,
+                } => {
+                    // Intersect with some triangles
+                    for i in
+                        triangle_offset as usize..(triangle_offset + num_triangles.get()) as usize
+                    {
+                        let triangle = &self.triangles[i];
+                        if let Some(intersection) = Intersect::intersect(triangle, ray)
+                            && intersection.t < closest_intersection.t
+                        {
+                            closest_intersection = intersection;
                         }
                     }
                 }
@@ -116,6 +105,12 @@ impl Intersect for Bvh {
         } else {
             None
         }
+    }
+}
+
+impl Intersect for Bvh {
+    fn intersect(&self, ray: &crate::ray::Ray) -> Option<Intersection> {
+        self.intersect_loop(ray)
     }
 }
 
