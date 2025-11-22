@@ -1,0 +1,10 @@
+{
+  "cube": {
+    "url": "https://casual-effects.com/g3d/data10/common/model/cube/cube.zip",
+    "type": "zip"
+  },
+  "teapot": {
+    "url": "https://casual-effects.com/g3d/data10/common/model/teapot/teapot.zip",
+    "type": "zip"
+  }
+}

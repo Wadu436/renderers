@@ -122,7 +122,7 @@ impl<'a> BvhBuilderNode<'a> {
                 ..
             } => first_child.size() + second_child.size(),
         };
-        return 1 + size_children;
+        1 + size_children
     }
 
     pub fn flatten(self, triangles: &mut Vec<Triangle>, nodes: &mut Vec<BvhNode>) {
@@ -206,7 +206,7 @@ fn split_along_optimal_axis(
         }
     }
 
-    return best_indices.unwrap();
+    best_indices.unwrap()
 }
 
 fn split_along_axis(

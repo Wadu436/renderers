@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Parser;
 
 pub mod output;
@@ -36,4 +38,13 @@ pub struct Args {
         allow_negative_numbers = true
     )]
     pub camera_z: Option<f32>,
+
+    #[arg(short, long)]
+    pub output: Option<PathBuf>,
+
+    #[arg(long)]
+    pub resolution_x: Option<u32>,
+
+    #[arg(long)]
+    pub resolution_y: Option<u32>,
 }

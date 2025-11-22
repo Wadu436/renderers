@@ -4,3 +4,5 @@ target
 # flamegraph stuff
 flamegraph*.svg
 perf.data*
+
+profile.json.gz

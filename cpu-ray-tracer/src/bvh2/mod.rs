@@ -1,5 +1,5 @@
 use core::f32;
-use std::num::NonZero;
+use std::{cell::RefCell, num::NonZero};
 
 use common::model::triangle::Triangle;
 use glam::Vec3;
@@ -33,10 +33,17 @@ enum BvhNodeKind {
     }, // 8 bytes
 }
 
-impl Bvh {
-    fn intersect_loop(&self, ray: &crate::ray::Ray) -> Option<Intersection> {
-        let mut stack: Vec<(f32, u32)> = Vec::with_capacity(16); // Vec of offsets we should visit
+thread_local! {
+    static STACK: RefCell<Vec<(f32, u32)>> = RefCell::new(Vec::with_capacity(16));
+}
 
+impl Bvh {
+    // TODO: figure out a way to make this non-allocating, instead of having to pass in a threadlocal stack
+    fn intersect_loop(
+        &self,
+        stack: &mut Vec<(f32, u32)>,
+        ray: &crate::ray::Ray,
+    ) -> Option<Intersection> {
         let mut closest_intersection: Intersection = Intersection {
             t: f32::INFINITY,
             point: Vec3::ZERO,
@@ -110,7 +117,9 @@ impl Bvh {
 
 impl Intersect for Bvh {
     fn intersect(&self, ray: &crate::ray::Ray) -> Option<Intersection> {
-        self.intersect_loop(ray)
+        // let mut stack = Vec::with_capacity(16);
+        // return self.intersect_loop(&mut stack, ray);
+        STACK.with_borrow_mut(|stack| self.intersect_loop(stack, ray))
     }
 }
 

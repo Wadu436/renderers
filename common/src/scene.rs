@@ -21,6 +21,11 @@ impl SceneBuilder {
         self
     }
 
+    pub fn add_meshes(mut self, meshes: Vec<Mesh>) -> Self {
+        self.meshes.extend(meshes);
+        self
+    }
+
     pub fn build(self) -> Scene {
         // We can do things like building acceleration structures here later
         Scene {

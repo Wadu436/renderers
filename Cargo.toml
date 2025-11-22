@@ -8,7 +8,8 @@ opt-level = 3
 [profile.dev]
 opt-level = 0
 
-[profile.release]
+[profile.profiling]
+inherits = "release"
 debug = true
 
 [workspace.dependencies]

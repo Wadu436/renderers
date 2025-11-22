@@ -2,12 +2,18 @@ use color_eyre::eyre::Result;
 use core::f32;
 use cpu_rasterizer::CpuRasterizer;
 use cpu_ray_tracer::CpuRayTracer;
-use std::io::{Write, stdout};
+use std::{
+    fs::{OpenOptions, read_dir},
+    io::{BufWriter, Write, stdout},
+};
 
 use common::{
     camera::Camera,
     image::{ImageFormat, jxl::JpegXl, ppm},
-    model::triangle::{Mesh, Triangle, Vertex},
+    model::{
+        format::obj::load_obj,
+        triangle::{Mesh, Triangle, Vertex},
+    },
     scene::{Scene, SceneBuilder},
     surface::Surface,
 };
@@ -17,7 +23,8 @@ use crate::arguments::output::OutputFormat;
 pub mod arguments;
 
 // const SCENE: (&str, f32) = ("./assets/cube.stl", 40.0);
-const SCENE: (&str, f32) = ("./assets/teapot.stl", 10.0);
+// const SCENE: (&str, f32) = ("./assets/teapot.stl", 10.0);
+const SCENE: (&str, glam::Vec3) = ("./assets/scenes/cube", glam::Vec3::new(2.0, 1.0, 1.0));
 
 fn debug_scene(surface: &Surface) -> Scene {
     // old single triangle replaced with a hexagon made of 6 triangles
@@ -39,14 +46,17 @@ fn debug_scene(surface: &Surface) -> Scene {
             v1: Vertex {
                 position: center,
                 normal: glam::Vec3::Z,
+                uv: None,
             },
             v2: Vertex {
                 position: v2,
                 normal: glam::Vec3::Z,
+                uv: None,
             },
             v3: Vertex {
                 position: v1,
                 normal: glam::Vec3::Z,
+                uv: None,
             },
         });
     }
@@ -74,12 +84,26 @@ fn debug_scene(surface: &Surface) -> Scene {
 }
 
 fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Scene> {
-    let mesh = bytes::Bytes::from(std::fs::read(SCENE.0)?);
-    let mesh = Mesh::load_stl(mesh);
+    // List all the files in the directory
+    let dir = read_dir(SCENE.0)?;
+
+    let mut meshes = Vec::new();
+
+    for entry in dir {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        if file_name.to_string_lossy().ends_with(".obj") {
+            // Load the mesh
+            let mesh = load_obj(entry.path());
+            meshes.extend(mesh);
+        }
+    }
+
+    let center = meshes.iter().map(|m| m.center).sum::<glam::Vec3>() / (meshes.len() as f32);
 
     let camera = Camera::look_at(
-        camera_origin.unwrap_or(glam::Vec3::new(SCENE.1, SCENE.1, SCENE.1)),
-        mesh.center,
+        camera_origin.unwrap_or(SCENE.1),
+        center,
         glam::Vec3::Z,
         80.0,
         surface.width() as f32 / surface.height() as f32,
@@ -87,14 +111,14 @@ fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Sc
 
     Ok(SceneBuilder::new()
         .with_camera(camera)
-        .add_mesh(mesh)
+        .add_meshes(meshes)
         .build())
 }
 
 pub fn run(args: arguments::Args) -> Result<()> {
     // Set up
-    let width = 1600;
-    let height = 900;
+    let width = args.resolution_x.unwrap_or(1920);
+    let height = args.resolution_y.unwrap_or(1080);
     let mut surface = Surface::new(width, height);
 
     // Render
@@ -123,24 +147,34 @@ pub fn run(args: arguments::Args) -> Result<()> {
     }
 
     // Write the file
-    let mut stdout = stdout();
+    let mut writer: Box<dyn Write> = if let Some(output) = args.output {
+        Box::new(BufWriter::new(
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(output)?,
+        ))
+    } else {
+        Box::new(BufWriter::new(stdout()))
+    };
     match args.format {
         OutputFormat::JpegXl => {
             let jxl = JpegXl { lossless: true };
 
-            jxl.save(&surface, &mut stdout)?;
+            jxl.save(&surface, &mut writer)?;
         }
 
         OutputFormat::Ppm => {
             let ppm = ppm::Ppm {
                 format: ppm::PpmFormat::Binary,
             };
-            ppm.save(&surface, &mut stdout)?;
-            stdout.flush()?;
+            ppm.save(&surface, &mut writer)?;
         }
 
         OutputFormat::None => {}
     }
+    writer.flush()?;
 
     Ok(())
 }

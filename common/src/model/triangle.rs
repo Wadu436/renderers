@@ -1,13 +1,18 @@
-use std::collections::HashMap;
-
-use crate::util::BufGlamExt;
-use bytes::{Buf, Bytes};
-use glam::Vec3;
-
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
     pub position: glam::Vec3,
     pub normal: glam::Vec3,
+    pub uv: Option<glam::Vec2>,
+}
+
+impl Vertex {
+    pub fn new(position: glam::Vec3, normal: glam::Vec3, uv: Option<glam::Vec2>) -> Self {
+        Self {
+            position,
+            normal,
+            uv,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -59,7 +64,7 @@ impl Triangle {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Mesh {
     pub triangles: Vec<Triangle>,
     pub bounding_box: (glam::Vec3, glam::Vec3),
@@ -67,83 +72,26 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn load_stl(mut bytes: Bytes) -> Self {
-        bytes.advance(80); // Skip the header
-        let num_triangles = bytes.get_u32_le();
-        let mut bounding_box_min = Vec3::MAX;
-        let mut bounding_box_max = Vec3::MIN;
+    pub fn new(triangles: Vec<Triangle>) -> Self {
+        assert!(!triangles.is_empty(), "Tried to build an empty mesh");
 
-        // (position, normals)
-        let mut stl_vertices: HashMap<(usize, usize, usize), (glam::Vec3, Vec<glam::Vec3>)> =
-            HashMap::new();
-        let mut triangle_vertex_indices: Vec<(
-            (usize, usize, usize),
-            (usize, usize, usize),
-            (usize, usize, usize),
-        )> = vec![];
+        let mut bb_min = glam::Vec3::INFINITY;
+        let mut bb_max = glam::Vec3::NEG_INFINITY;
+        for t in triangles.iter() {
+            bb_min = bb_min.min(t.v1.position);
+            bb_min = bb_min.min(t.v2.position);
+            bb_min = bb_min.min(t.v3.position);
 
-        // Returns the index in the vertices array
-        let mut update_vertices = |position: glam::Vec3, normal: glam::Vec3| {
-            // get the coords of this vertex
-            let c1 = (position.x / 1e-5) as usize;
-            let c2 = (position.y / 1e-5) as usize;
-            let c3 = (position.z / 1e-5) as usize;
-
-            let grid_coords = (c1, c2, c3);
-
-            stl_vertices
-                .entry(grid_coords)
-                .and_modify(|e| e.1.push(normal))
-                .or_insert_with(|| (position, vec![normal]));
-
-            grid_coords
-        };
-
-        for _ in 0..num_triangles {
-            let normal = bytes.get_vec3_le();
-            let v1 = bytes.get_vec3_le();
-            let v2 = bytes.get_vec3_le();
-            let v3 = bytes.get_vec3_le();
-            bytes.advance(2); // attribute byte count
-
-            let v1_index = update_vertices(v1, normal);
-            let v2_index = update_vertices(v2, normal);
-            let v3_index = update_vertices(v3, normal);
-
-            triangle_vertex_indices.push((v1_index, v2_index, v3_index));
-
-            bounding_box_min = bounding_box_min.min(v1).min(v2).min(v3);
-            bounding_box_max = bounding_box_max.max(v1).max(v2).max(v3);
+            bb_max = bb_max.max(t.v1.position);
+            bb_max = bb_max.max(t.v2.position);
+            bb_max = bb_max.max(t.v3.position);
         }
 
-        // Process the vertices to get vertex normals
-        let vertices = stl_vertices
-            .into_iter()
-            .map(|(c, (position, normals))| {
-                (
-                    c,
-                    Vertex {
-                        position,
-                        normal: normals.iter().sum::<glam::Vec3>() / (normals.len() as f32),
-                    },
-                )
-            })
-            .collect::<HashMap<_, _>>();
-
-        let triangles = triangle_vertex_indices
-            .into_iter()
-            .map(|(i1, i2, i3)| Triangle {
-                v1: vertices.get(&i1).unwrap().clone(),
-                v2: vertices.get(&i2).unwrap().clone(),
-                v3: vertices.get(&i3).unwrap().clone(),
-            })
-            .collect::<Vec<_>>();
-
-        let center = (bounding_box_min + bounding_box_max) / 2.0;
+        let center = (bb_min + bb_max) / 2.0;
 
         Self {
             triangles,
-            bounding_box: (bounding_box_min, bounding_box_max),
+            bounding_box: (bb_min, bb_max),
             center,
         }
     }
