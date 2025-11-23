@@ -1,8 +1,6 @@
 WARNING: unrecognized line: "mtllib default.mtl"
 WARNING: unrecognized line: "usemtl default"
-None triangle intersection
-None triangle intersection
-Some triangle intersection
-Some triangle intersection
-None triangle intersection
-Some triangle intersection
+WARNING: unrecognized line: "usemtl default"
+(Vec3(-71.89253, 0.0, -47.928356), Vec3(82.294, 59.873005, 47.928356)), Vec3(5.200733, 29.936502, 0.0)
+(Vec3(-33.56471, 58.93855, -33.56471), Vec3(33.564705, 79.00656, 33.56471)), Vec3(-1.9073486e-6, 68.97256, 0.0)
+camera: Camera { origin: Vec3(100.0, 80.0, 80.0), view: Vec3(-0.75101405, -0.2355253, -0.6168516), up: Vec3(-0.49388245, -0.15488634, 0.6604381), right: Vec3(-0.25109172, 0.80065036, 0.0) }

@@ -24,7 +24,8 @@ pub mod arguments;
 
 // const SCENE: (&str, f32) = ("./assets/cube.stl", 40.0);
 // const SCENE: (&str, f32) = ("./assets/teapot.stl", 10.0);
-const SCENE: (&str, glam::Vec3) = ("./assets/scenes/cube", glam::Vec3::new(2.0, 1.0, 1.0));
+// const SCENE: (&str, glam::Vec3) = ("./assets/scenes/cube", glam::Vec3::new(2.0, 1.0, 1.0));
+const SCENE: (&str, glam::Vec3) = ("./assets/scenes/teapot", glam::Vec3::new(50.0, 90.0, 120.0));
 
 fn debug_scene(surface: &Surface) -> Scene {
     // old single triangle replaced with a hexagon made of 6 triangles
@@ -99,12 +100,17 @@ fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Sc
         }
     }
 
-    let center = meshes.iter().map(|m| m.center).sum::<glam::Vec3>() / (meshes.len() as f32);
+    let bounding_box = meshes
+        .iter()
+        .map(|m| m.bounding_box)
+        .reduce(|a, b| (a.0 + b.0, a.1 + b.1))
+        .unwrap_or_default();
+    let center = (bounding_box.0 + bounding_box.1) / (2.0 * (meshes.len() as f32));
 
     let camera = Camera::look_at(
         camera_origin.unwrap_or(SCENE.1),
         center,
-        glam::Vec3::Z,
+        glam::Vec3::Y,
         80.0,
         surface.width() as f32 / surface.height() as f32,
     );

@@ -6,6 +6,7 @@ use std::{
 };
 
 use glam::{Vec2, Vec3};
+use tap::Tap;
 
 use crate::model::triangle::{Mesh, Triangle, Vertex};
 
@@ -168,13 +169,13 @@ pub fn load_obj<P: AsRef<Path>>(path: P) -> Vec<Mesh> {
         if let Some(vertex_indices) = l.strip_prefix("f ").map(parse_vertex_list)
             && vertex_indices.len() >= 3
         {
-            let mut group = current_group.take().unwrap_or_else(|| vec![]);
+            let mut group = current_group.take().unwrap_or_default();
             group.extend((2..vertex_indices.len()).map(|i| {
                 face_vertices_to_triangle(
                     [
                         &vertex_indices[0],
-                        &vertex_indices[i - 1],
                         &vertex_indices[i],
+                        &vertex_indices[i - 1],
                     ],
                     &vertices,
                     &vertex_uvs,
@@ -182,6 +183,7 @@ pub fn load_obj<P: AsRef<Path>>(path: P) -> Vec<Mesh> {
                 )
             }));
             current_group = Some(group);
+            // break;
             continue;
         }
 

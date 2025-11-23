@@ -220,6 +220,7 @@ dependencies = [
  "glam",
  "jpegxl-rs",
  "kd-tree",
+ "tap",
 ]
 
 [[package]]

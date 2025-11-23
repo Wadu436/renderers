@@ -4,8 +4,8 @@ BENCHMARK_DIR="$(dirname "${BASH_SOURCE[0]}")"
 RUN_ID="$(date +%Y%m%d_%H%M%S)"
 RESULTS_DIR="$BENCHMARK_DIR/results/$RUN_ID"
 
-# RESOLUTION_X=800
-# RESOLUTION_Y=450
+# RESOLUTION_X=400
+# RESOLUTION_Y=300
 
 RESOLUTION_X=1920
 RESOLUTION_Y=1080
@@ -25,13 +25,13 @@ for renderer in "${renderers[@]}"; do
     JSON_FILE="$RESULTS_DIR/${renderer}_hyperfine.json"
 
     # Generate a picture for verifying the output
-    $BIN --renderer $renderer --format ppm --camera-origin 2,1,1 --resolution $RESOLUTION_X,$RESOLUTION_Y -o $OUTPUT_FILE &> $LOG_FILE
+    $BIN --renderer $renderer --format ppm --resolution $RESOLUTION_X,$RESOLUTION_Y -o $OUTPUT_FILE &> $LOG_FILE
+    magick $OUTPUT_FILE $OUTPUT_FILE_PNG 
 
     hyperfine --warmup 2 \
         --export-json "$JSON_FILE" \
-        "$BIN --renderer $renderer --format none --camera-origin 2,1,1 --resolution $RESOLUTION_X,$RESOLUTION_Y"
+        "$BIN --renderer $renderer --format none --resolution $RESOLUTION_X,$RESOLUTION_Y"
 
-    magick $OUTPUT_FILE $OUTPUT_FILE_PNG 
 
     echo "Saved benchmark result to $OUTPUT_FILE_PNG (stats in $JSON_FILE)"
 done
