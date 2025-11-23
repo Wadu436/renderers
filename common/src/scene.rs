@@ -1,8 +1,9 @@
-use crate::{camera::Camera, model::triangle::Mesh};
+use crate::{camera::Camera, light::Light, model::triangle::Mesh};
 
 #[derive(Default)]
 pub struct SceneBuilder {
     camera: Option<Camera>,
+    lights: Vec<Light>,
     meshes: Vec<Mesh>,
 }
 
@@ -26,11 +27,17 @@ impl SceneBuilder {
         self
     }
 
+    pub fn add_light(mut self, light: Light) -> Self {
+        self.lights.push(light);
+        self
+    }
+
     pub fn build(self) -> Scene {
         // We can do things like building acceleration structures here later
         Scene {
             camera: self.camera.unwrap_or_default(),
             meshes: self.meshes,
+            lights: self.lights,
         }
     }
 }
@@ -39,6 +46,7 @@ impl SceneBuilder {
 pub struct Scene {
     camera: Camera,
     meshes: Vec<Mesh>,
+    lights: Vec<Light>,
 }
 
 impl Scene {
@@ -48,5 +56,9 @@ impl Scene {
 
     pub fn meshes(&self) -> &Vec<Mesh> {
         &self.meshes
+    }
+
+    pub fn lights(&self) -> &Vec<Light> {
+        &self.lights
     }
 }

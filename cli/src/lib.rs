@@ -2,14 +2,19 @@ use color_eyre::eyre::Result;
 use core::f32;
 use cpu_rasterizer::CpuRasterizer;
 use cpu_ray_tracer::CpuRayTracer;
+use glam::Vec3;
+use serde::Deserialize;
 use std::{
-    fs::{OpenOptions, read_dir},
+    fs::{File, OpenOptions, read_dir},
     io::{BufWriter, Write, stdout},
+    path::PathBuf,
 };
+use tap::Tap;
 
 use common::{
     camera::Camera,
     image::{ImageFormat, jxl::JpegXl, ppm},
+    light::Light,
     model::{
         format::obj::load_obj,
         triangle::{Mesh, Triangle, Vertex},
@@ -25,7 +30,7 @@ pub mod arguments;
 // const SCENE: (&str, f32) = ("./assets/cube.stl", 40.0);
 // const SCENE: (&str, f32) = ("./assets/teapot.stl", 10.0);
 // const SCENE: (&str, glam::Vec3) = ("./assets/scenes/cube", glam::Vec3::new(2.0, 1.0, 1.0));
-const SCENE: (&str, glam::Vec3) = ("./assets/scenes/teapot", glam::Vec3::new(50.0, 90.0, 120.0));
+// const SCENE: (&str, glam::Vec3) = ("./assets/scenes/teapot", glam::Vec3::new(50.0, 90.0, 120.0));
 
 fn debug_scene(surface: &Surface) -> Scene {
     // old single triangle replaced with a hexagon made of 6 triangles
@@ -84,9 +89,21 @@ fn debug_scene(surface: &Surface) -> Scene {
         .build()
 }
 
-fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Scene> {
+#[derive(Deserialize)]
+struct CameraSettings {
+    origin: glam::Vec3,
+    look_at: Option<glam::Vec3>,
+    horizontal_fov: Option<f32>,
+    up: Option<glam::Vec3>,
+}
+
+fn load_scene(
+    scene_path: PathBuf,
+    surface: &Surface,
+    camera_origin: Option<glam::Vec3>,
+) -> Result<Scene> {
     // List all the files in the directory
-    let dir = read_dir(SCENE.0)?;
+    let dir = read_dir(&scene_path)?;
 
     let mut meshes = Vec::new();
 
@@ -107,17 +124,32 @@ fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Sc
         .unwrap_or_default();
     let center = (bounding_box.0 + bounding_box.1) / (2.0 * (meshes.len() as f32));
 
+    // Load the camera
+    let camera_settings: CameraSettings = serde_json::from_reader(
+        File::open(
+            scene_path
+                .to_path_buf()
+                .tap_mut(|path| path.push("./camera.json")),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+
     let camera = Camera::look_at(
-        camera_origin.unwrap_or(SCENE.1),
-        center,
-        glam::Vec3::Y,
-        80.0,
+        camera_origin.unwrap_or(camera_settings.origin),
+        camera_settings.look_at.unwrap_or(center),
+        camera_settings.up.unwrap_or(glam::Vec3::Y),
+        camera_settings.horizontal_fov.unwrap_or(80.0),
         surface.width() as f32 / surface.height() as f32,
     );
 
     Ok(SceneBuilder::new()
         .with_camera(camera)
         .add_meshes(meshes)
+        .add_light(Light::Sun {
+            direction: Vec3::ONE.normalize(),
+            intensity: 0.8,
+        })
         .build())
 }
 
@@ -135,7 +167,7 @@ pub fn run(args: arguments::Args) -> Result<()> {
     let scene = if args.debug {
         debug_scene(&surface)
     } else {
-        load_scene(&surface, camera_option)?
+        load_scene(args.scene, &surface, camera_option)?
     };
 
     match args.renderer {

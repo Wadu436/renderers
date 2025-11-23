@@ -14,6 +14,13 @@ impl Ray {
         &self.direction
     }
 
+    pub fn new(origin: glam::Vec3, direction: glam::Vec3) -> Self {
+        Ray {
+            origin,
+            direction: direction.normalize(),
+        }
+    }
+
     pub fn from_camera(camera: &common::camera::Camera, ndc: glam::Vec2) -> Self {
         let origin = camera.origin();
         let direction = camera.ndc_to_viewing_direction(ndc);

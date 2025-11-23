@@ -1,15 +1,18 @@
 use core::f32;
 
-use tap::Tap;
+use common::light;
 
 use crate::{
     bvh::{Bvh, builder::BvhBuilder},
     intersect::Intersect,
+    ray::Ray,
 };
 
 mod bvh;
 mod intersect;
 mod ray;
+
+const BIAS: f32 = 0.01;
 
 pub struct CpuRayTracer {
     scene: common::scene::Scene,
@@ -68,6 +71,36 @@ impl CpuRayTracer {
                 // }
 
                 if let Some(intersection) = self.bvh.intersect(&ray) {
+                    let light_intensity: f32 = self
+                        .scene
+                        .lights()
+                        .iter()
+                        .map(|light| {
+                            let (light_ray, distance, intensity) = match light {
+                                light::Light::Sun {
+                                    direction,
+                                    intensity,
+                                } => {
+                                    let light_ray = Ray::new(
+                                        intersection.point + BIAS * intersection.normal,
+                                        *direction,
+                                    );
+                                    (light_ray, f32::INFINITY, *intensity)
+                                }
+                            };
+
+                            if let Some(intersection) = self.bvh.intersect(&light_ray) {
+                                0.0
+                            } else {
+                                intensity
+                                    * intersection
+                                        .normal
+                                        .dot(*light_ray.direction())
+                                        .clamp(0.0, 1.0)
+                            }
+                        })
+                        .sum();
+
                     // Simple shading based on angle to lightray
                     let intensity = intersection.normal.dot(-ray.direction()).clamp(0.0, 1.0);
                     let color = ((intersection.uv.x * 16.0).round()
@@ -75,7 +108,9 @@ impl CpuRayTracer {
                         % 2.0;
 
                     *surface.get_mut(x, y) =
-                        (glam::Vec3::ONE * (0.5 + color / 2.0) * intensity).into();
+                        (glam::Vec3::ONE * (0.5 + color / 2.0) * (light_intensity)).into();
+                } else {
+                    *surface.get_mut(x, y) = glam::Vec3::new(0.5, 0.7, 0.9).into();
                 }
             }
         }

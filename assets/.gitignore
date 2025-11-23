@@ -1,0 +1,6 @@
+*
+!.gitignore
+!manifest.json
+!scenes/
+!scenes/**/
+!scenes/**/camera.json

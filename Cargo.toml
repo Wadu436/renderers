@@ -13,8 +13,9 @@ inherits = "release"
 debug = true
 
 [workspace.dependencies]
-glam = "0.30.9"
+glam = { version = "0.30.9", features = ["serde"] }
 bytes = "1.10.1"
+tap = "1.0.1"
 
 [workspace.lints.clippy]
 get_first = "allow"

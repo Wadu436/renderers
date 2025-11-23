@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 common = { path = "../common" }
 glam = { workspace = true }
-tap = "1.0.1"
+tap = { workspace = true }
 
 [lints]
 workspace = true

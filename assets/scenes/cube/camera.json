@@ -1,0 +1,6 @@
+{
+  "origin": [2, 1, 1],
+  "look_at": [0, 0, 0],
+  "horizontal_fov": 80,
+  "up": [0, 1, 0]
+}

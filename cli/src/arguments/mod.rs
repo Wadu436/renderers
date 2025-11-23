@@ -65,4 +65,6 @@ pub struct Args {
 
     #[arg(long)]
     pub resolution: Option<Resolution>,
+
+    pub scene: PathBuf,
 }

@@ -9,7 +9,7 @@ bytes = { workspace = true }
 bytemuck = "1.24.0"
 jpegxl-rs = "0.11.2"
 kd-tree = "0.6.1"
-tap = "1.0.1"
+tap = { workspace = true }
 
 [lints]
 workspace = true
