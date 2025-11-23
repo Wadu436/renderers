@@ -20,7 +20,7 @@ impl Intersect for common::model::triangle::Triangle {
 
         if det.abs() < f32::EPSILON {
             // Ray is parallel to triangle
-            println!("None triangle intersection");
+            // println!("None triangle intersection");
             return None;
         }
 
@@ -29,7 +29,7 @@ impl Intersect for common::model::triangle::Triangle {
         let u = inv_det * s.dot(ray_cross_e2);
         if !(0.0..=1.0).contains(&u) {
             // Intersection lies outside the triangle
-            println!("None triangle intersection");
+            // println!("None triangle intersection");
             return None;
         }
 
@@ -38,7 +38,7 @@ impl Intersect for common::model::triangle::Triangle {
 
         if v < 0.0 || u + v > 1.0 {
             // Intersection lies outside the triangle
-            println!("None triangle intersection");
+            // println!("None triangle intersection");
             return None;
         }
 
@@ -46,7 +46,7 @@ impl Intersect for common::model::triangle::Triangle {
 
         if t > f32::EPSILON {
             // ray intersection
-            println!("Some triangle intersection");
+            // println!("Some triangle intersection");
             let point = ray.at_t(t);
             Some(crate::intersect::Intersection {
                 t,
@@ -54,7 +54,7 @@ impl Intersect for common::model::triangle::Triangle {
                 normal: self.v1.normal * (1.0 - u - v) + self.v2.normal * u + self.v3.normal * v,
             })
         } else {
-            println!("None triangle intersection");
+            // println!("None triangle intersection");
             None
         }
     }

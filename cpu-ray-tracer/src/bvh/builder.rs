@@ -191,7 +191,7 @@ fn split_along_optimal_axis(
     primitives: &[BvhPrimitive],
     indices: Vec<usize>,
 ) -> (Vec<usize>, Vec<usize>) {
-    let mut best_score = f32::INFINITY;
+    let best_score = f32::INFINITY;
     let mut best_indices = None;
 
     for axis in 0..=2 {
@@ -202,7 +202,7 @@ fn split_along_optimal_axis(
             BoundingBox::from_iter(indices_right.iter().map(|&i| &primitives[i].bounding_box));
         let score = bounding_box_left.area() + bounding_box_right.area();
         if score < best_score {
-            best_score = score;
+            // best_score = score;
             best_indices = Some((indices_left, indices_right));
         }
     }

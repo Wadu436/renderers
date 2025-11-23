@@ -31,8 +31,9 @@ impl BoundingBox {
     }
 
     pub fn area(&self) -> f32 {
-        let dims = self.max - self.min;
-        2.0 * (dims.x * dims.y + dims.x * dims.z + dims.y * dims.z)
+        // let dims = self.max - self.min;
+        // 2.0 * (dims.x * dims.y + dims.x * dims.z + dims.y * dims.z);
+        (self.max - self.min).element_product()
     }
 }
 
