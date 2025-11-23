@@ -6,9 +6,34 @@ use std::{
 };
 
 use glam::{Vec2, Vec3};
-use tap::Tap;
+use tap::{Pipe, Tap};
 
 use crate::model::triangle::{Mesh, Triangle, Vertex};
+
+struct ObjVertex {
+    position: Vec3,
+    normals: Vec<Vec3>, // (normal, weight)
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ObjVertexWithNormal {
+    position: Vec3,
+    normal: Vec3,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ObjFaceVertex {
+    vertex_index: usize,
+    uv_index: Option<usize>,
+    normal_index: Option<usize>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ObjFace {
+    vertices: [ObjFaceVertex; 3],
+    normal: Vec3,
+    area: f32, // needed for smooth shading
+}
 
 fn parse_coords_list(c: &str) -> Option<Vec<f32>> {
     c.split_whitespace()
@@ -17,22 +42,39 @@ fn parse_coords_list(c: &str) -> Option<Vec<f32>> {
         .ok()
 }
 
-struct FaceVertex {
-    vertex_index: NonZero<isize>,
-    uv_index: Option<NonZero<isize>>,
-    normal_index: Option<NonZero<isize>>,
-}
-
-fn parse_vertex_list(c: &str) -> Vec<FaceVertex> {
+fn parse_vertex_list(
+    c: &str,
+    num_vertices: usize,
+    num_uvs: usize,
+    num_normals: usize,
+) -> Vec<ObjFaceVertex> {
     c.split_whitespace()
         .map(|c| {
             let mut k = c
                 .split("/")
                 .flat_map(|i| (!i.is_empty()).then(|| i.parse::<isize>().unwrap()));
-            let vertex_index = k.next().unwrap().try_into().unwrap();
-            let uv_index = k.next().map(TryInto::try_into).map(Result::unwrap);
-            let normal_index = k.next().map(TryInto::try_into).map(Result::unwrap);
-            FaceVertex {
+            let vertex_index: usize = k.next().unwrap().pipe(|i| {
+                if i.is_positive() {
+                    (i as usize) - 1
+                } else {
+                    num_vertices - (-i as usize)
+                }
+            });
+            let uv_index = k.next().map(|i| {
+                if i.is_positive() {
+                    (i as usize) - 1
+                } else {
+                    num_uvs - (-i as usize)
+                }
+            });
+            let normal_index = k.next().map(|i| {
+                if i.is_positive() {
+                    (i as usize) - 1
+                } else {
+                    num_normals - (-i as usize)
+                }
+            });
+            ObjFaceVertex {
                 vertex_index,
                 uv_index,
                 normal_index,
@@ -41,67 +83,55 @@ fn parse_vertex_list(c: &str) -> Vec<FaceVertex> {
         .collect()
 }
 
-fn face_vertices_to_triangle(
-    fs: [&FaceVertex; 3],
-    vertices: &[Vec3],
+fn parse_faces(vertex_list: Vec<ObjFaceVertex>, vertices: &[ObjVertex]) -> Vec<ObjFace> {
+    let positions = vertex_list
+        .iter()
+        .map(|v| vertices[v.vertex_index].position)
+        .collect::<Vec<_>>();
+
+    (2..vertex_list.len())
+        .map(|i| {
+            let e1 = positions[i - 1] - positions[0];
+            let e2 = positions[i] - positions[0];
+
+            let cross = e1.cross(e2);
+            let area = cross.length() / 2.0;
+            let face_normal = e1.cross(e2).normalize();
+
+            ObjFace {
+                vertices: [vertex_list[0], vertex_list[i - 1], vertex_list[i]],
+                normal: face_normal,
+                area,
+            }
+        })
+        .collect()
+}
+
+fn convert_face_to_triangle(
+    face: &ObjFace,
+    vertices: &[ObjVertexWithNormal],
     vertex_uvs: &[Vec2],
     vertex_normals: &[Vec3],
 ) -> Triangle {
-    let positions: Vec<Vec3> = fs
+    let vertices = face
+        .vertices
         .iter()
-        .map(|f| {
-            if f.vertex_index.is_positive() {
-                let index = (f.vertex_index.get() - 1) as usize;
-                vertices[index]
-            } else {
-                let index = vertices.len() - ((-f.vertex_index.get()) as usize);
-                vertices[index]
+        .map(|v| {
+            let vertex = vertices[v.vertex_index];
+            let uv = v.uv_index.map(|i| vertex_uvs[i]);
+            let normal = v
+                .normal_index
+                .map(|i| vertex_normals[i])
+                .unwrap_or_else(|| vertex.normal);
+            // .unwrap_or_else(|| face.normal);
+
+            Vertex {
+                position: vertex.position,
+                uv,
+                normal,
             }
         })
-        .collect();
-
-    let e1 = positions[1] - positions[0];
-    let e2 = positions[2] - positions[0];
-    let calculated_normal = e2.cross(e1).normalize();
-
-    let normals: Vec<Vec3> = fs
-        .iter()
-        .map(|f| {
-            f.normal_index
-                .map(|normal_index| {
-                    if normal_index.is_positive() {
-                        let index = (normal_index.get() - 1) as usize;
-                        vertex_normals[index]
-                    } else {
-                        let index = vertex_normals.len() - ((-normal_index.get()) as usize);
-                        vertex_normals[index]
-                    }
-                })
-                .unwrap_or(calculated_normal)
-        })
-        .collect();
-
-    let uvs: Vec<_> = fs
-        .iter()
-        .map(|f| {
-            f.uv_index.map(|uv_index| {
-                if uv_index.is_positive() {
-                    let index = (uv_index.get() - 1) as usize;
-                    vertex_uvs[index]
-                } else {
-                    let index = vertex_uvs.len() - ((-uv_index.get()) as usize);
-                    vertex_uvs[index]
-                }
-            })
-        })
-        .collect();
-
-    let vertices: Vec<_> = positions
-        .into_iter()
-        .zip(normals)
-        .zip(uvs)
-        .map(|((p, n), uv)| Vertex::new(p, n, uv))
-        .collect();
+        .collect::<Vec<_>>();
 
     Triangle {
         v1: vertices[0],
@@ -118,9 +148,9 @@ pub fn load_obj<P: AsRef<Path>>(path: P) -> Vec<Mesh> {
     let mut vertex_uvs = vec![];
     let mut vertex_normals = vec![];
 
-    let mut meshes: Vec<Mesh> = Vec::new();
+    let mut groups: Vec<Vec<ObjFace>> = Vec::new();
 
-    let mut current_group: Option<Vec<Triangle>> = None;
+    let mut current_group: Option<Vec<ObjFace>> = None;
 
     // Process the file line by line
     for l in reader.lines().map_while(Result::ok) {
@@ -133,8 +163,12 @@ pub fn load_obj<P: AsRef<Path>>(path: P) -> Vec<Mesh> {
         if let Some(coords) = l.strip_prefix("v ").and_then(parse_coords_list)
             && coords.len() >= 3
         {
-            let vertex = glam::Vec3::from_slice(&coords);
-            vertices.push(vertex);
+            let position = glam::Vec3::from_slice(&coords);
+
+            vertices.push(ObjVertex {
+                position,
+                normals: vec![],
+            });
             continue;
         }
 
@@ -159,29 +193,29 @@ pub fn load_obj<P: AsRef<Path>>(path: P) -> Vec<Mesh> {
         if let Some(name) = l.strip_prefix("g ").map(str::trim) {
             // If there's already a group, save it
             if let Some(mesh) = current_group.take() {
-                meshes.push(Mesh::new(mesh));
+                groups.push(mesh);
             }
 
             current_group = Some(Vec::new());
             continue;
         }
 
-        if let Some(vertex_indices) = l.strip_prefix("f ").map(parse_vertex_list)
-            && vertex_indices.len() >= 3
+        if let Some(faces) = l
+            .strip_prefix("f ")
+            .map(|c| parse_vertex_list(c, vertices.len(), vertex_uvs.len(), vertex_normals.len()))
+            .map(|obj_vertices| parse_faces(obj_vertices, &vertices))
         {
             let mut group = current_group.take().unwrap_or_default();
-            group.extend((2..vertex_indices.len()).map(|i| {
-                face_vertices_to_triangle(
-                    [
-                        &vertex_indices[0],
-                        &vertex_indices[i],
-                        &vertex_indices[i - 1],
-                    ],
-                    &vertices,
-                    &vertex_uvs,
-                    &vertex_normals,
-                )
-            }));
+
+            for face in faces.iter() {
+                for v in &face.vertices {
+                    vertices[v.vertex_index]
+                        .normals
+                        .push(face.normal * face.area);
+                }
+            }
+
+            group.extend(faces);
             current_group = Some(group);
             // break;
             continue;
@@ -191,9 +225,35 @@ pub fn load_obj<P: AsRef<Path>>(path: P) -> Vec<Mesh> {
     }
 
     // Also put the final group in the vec
-    if let Some(mesh) = current_group.take() {
-        meshes.push(Mesh::new(mesh));
+    if let Some(group) = current_group.take() {
+        groups.push(group);
     }
 
-    meshes
+    // Calculate smooth vertex normals
+    let vertices_with_normals = vertices
+        .iter()
+        .map(|v| ObjVertexWithNormal {
+            position: v.position,
+            normal: v.normals.iter().sum::<Vec3>().normalize(),
+        })
+        .collect::<Vec<_>>();
+
+    // turn Vec<ObjFace> into Meshes
+    groups
+        .iter()
+        .map(|g| {
+            let triangles = g
+                .iter()
+                .map(|f| {
+                    convert_face_to_triangle(
+                        f,
+                        &vertices_with_normals,
+                        &vertex_uvs,
+                        &vertex_normals,
+                    )
+                })
+                .collect();
+            Mesh::new(triangles)
+        })
+        .collect()
 }
