@@ -1,10 +1,9 @@
 use crate::{
-    bvh2::{Bvh, builder::BvhBuilder},
+    bvh::{Bvh, builder::BvhBuilder},
     intersect::Intersect,
 };
 
 mod bvh;
-mod bvh2;
 mod intersect;
 mod ray;
 
@@ -42,7 +41,7 @@ impl CpuRayTracer {
 
                 if let Some(intersection) = self.bvh.intersect(&ray) {
                     // Simple shading based on angle to lightray
-                    let intensity = intersection.normal.dot(-ray.direction).clamp(0.0, 1.0);
+                    let intensity = intersection.normal.dot(-ray.direction()).clamp(0.0, 1.0);
                     *surface.get_mut(x, y) = (glam::Vec3::ONE * intensity).into();
                 }
             }

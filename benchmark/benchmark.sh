@@ -25,11 +25,11 @@ for renderer in "${renderers[@]}"; do
     JSON_FILE="$RESULTS_DIR/${renderer}_hyperfine.json"
 
     # Generate a picture for verifying the output
-    $BIN --renderer $renderer --format ppm --camera-x 2 --camera-y 1 --camera-z 1 --resolution-x $RESOLUTION_X --resolution-y $RESOLUTION_Y -o $OUTPUT_FILE &> $LOG_FILE
+    $BIN --renderer $renderer --format ppm --camera-origin 2,1,1 --resolution $RESOLUTION_X,$RESOLUTION_Y -o $OUTPUT_FILE &> $LOG_FILE
 
     hyperfine --warmup 2 \
         --export-json "$JSON_FILE" \
-        "$BIN --renderer $renderer --format none --camera-x 2 --camera-y 1 --camera-z 1 --resolution-x $RESOLUTION_X --resolution-y $RESOLUTION_Y"
+        "$BIN --renderer $renderer --format none --camera-origin 2,1,1 --resolution $RESOLUTION_X,$RESOLUTION_Y"
 
     magick $OUTPUT_FILE $OUTPUT_FILE_PNG 
 

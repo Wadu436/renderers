@@ -4,7 +4,7 @@ use std::num::NonZeroU32;
 use common::model::triangle::Triangle;
 
 use super::{Bvh, BvhNode};
-use crate::bvh2::{BvhNodeKind, bounding_box::BoundingBox};
+use crate::bvh::{BvhNodeKind, bounding_box::BoundingBox};
 
 #[derive(Debug, Clone)]
 struct BvhPrimitive {
@@ -46,12 +46,12 @@ impl BvhBuilder {
     fn build_node<'a>(&'a self, indices: Vec<usize>) -> BvhBuilderNode<'a> {
         if indices.len() == 1 {
             let child = indices
-                .get(0)
+                .first()
                 .copied()
                 .map(|i| &self.primitives[i])
                 .unwrap();
             BvhBuilderNode {
-                bounding_box: child.bounding_box.clone(),
+                bounding_box: child.bounding_box,
                 kind: BvhBuilderNodeKind::Leaf {
                     first_triangle: &child.triangle,
                     second_triangle: None,
@@ -191,7 +191,7 @@ fn split_along_optimal_axis(
     primitives: &[BvhPrimitive],
     indices: Vec<usize>,
 ) -> (Vec<usize>, Vec<usize>) {
-    let best_score = f32::MAX;
+    let mut best_score = f32::INFINITY;
     let mut best_indices = None;
 
     for axis in 0..=2 {
@@ -202,6 +202,7 @@ fn split_along_optimal_axis(
             BoundingBox::from_iter(indices_right.iter().map(|&i| &primitives[i].bounding_box));
         let score = bounding_box_left.area() + bounding_box_right.area();
         if score < best_score {
+            best_score = score;
             best_indices = Some((indices_left, indices_right));
         }
     }

@@ -1,14 +1,17 @@
 pub struct Ray {
-    pub origin: glam::Vec3,
-    pub direction: glam::Vec3,
+    origin: glam::Vec3,
+    direction: glam::Vec3,
 }
 
 impl Ray {
-    pub fn new(origin: glam::Vec3, direction: glam::Vec3) -> Self {
-        Self {
-            origin,
-            direction: direction.normalize(),
-        }
+    #[inline]
+    pub fn origin(&self) -> &glam::Vec3 {
+        &self.origin
+    }
+
+    #[inline]
+    pub fn direction(&self) -> &glam::Vec3 {
+        &self.direction
     }
 
     pub fn from_camera(camera: &common::camera::Camera, ndc: glam::Vec2) -> Self {

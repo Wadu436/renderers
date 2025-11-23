@@ -12,3 +12,6 @@ cpu-ray-tracer = { path = "../cpu-ray-tracer" }
 color-eyre = "0.6.5"
 clap = { version = "4.5.51", features = ["derive"] }
 clap-file = "0.2.0"
+
+[lints]
+workspace = true

@@ -23,47 +23,6 @@ pub struct Triangle {
     pub v3: Vertex, // 24 bytes
 }
 
-impl Triangle {
-    // (t, u, v)
-    pub fn intersect(&self, origin: glam::Vec3, direction: glam::Vec3) -> Option<(f32, f32, f32)> {
-        let e1 = self.v2.position - self.v1.position;
-        let e2 = self.v3.position - self.v1.position;
-
-        let ray_cross_e2 = direction.cross(e2);
-        let det = e1.dot(ray_cross_e2);
-
-        if det.abs() < f32::EPSILON {
-            // Ray is parallel to triangle
-            return None;
-        }
-
-        let inv_det = 1.0 / det;
-        let s = origin - self.v1.position;
-        let u = inv_det * s.dot(ray_cross_e2);
-        if !(0.0..=1.0).contains(&u) {
-            // Intersection lies outside the triangle
-            return None;
-        }
-
-        let s_cross_e1 = s.cross(e1);
-        let v = inv_det * direction.dot(s_cross_e1);
-
-        if v < 0.0 || u + v > 1.0 {
-            // Intersection lies outside the triangle
-            return None;
-        }
-
-        let t = inv_det * e2.dot(s_cross_e1);
-
-        if t > f32::EPSILON {
-            // ray intersection
-            Some((t, u, v))
-        } else {
-            None
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Mesh {
     pub triangles: Vec<Triangle>,

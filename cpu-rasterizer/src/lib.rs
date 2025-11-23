@@ -38,13 +38,14 @@ impl CpuRasterizer {
                 let mut closest_intersection = f32::INFINITY;
                 for mesh in self.scene.meshes() {
                     for triangle in &mesh.triangles {
-                        if let Some((t, _, _)) = triangle.intersect(origin, direction)
-                            && t < closest_intersection
-                        {
-                            // Add some shading!
-                            *surface.get_mut(x, y) = (glam::Vec3::ONE).into();
-                            closest_intersection = t;
-                        }
+                        todo!()
+                        // if let Some((t, _, _)) = triangle.intersect(origin, direction)
+                        //     && t < closest_intersection
+                        // {
+                        //     // Add some shading!
+                        //     *surface.get_mut(x, y) = (glam::Vec3::ONE).into();
+                        //     closest_intersection = t;
+                        // }
                     }
                 }
             }

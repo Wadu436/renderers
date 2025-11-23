@@ -7,3 +7,6 @@ edition = "2024"
 common = { path = "../common" }
 glam = { workspace = true }
 tap = "1.0.1"
+
+[lints]
+workspace = true

@@ -18,7 +18,7 @@ use common::{
     surface::Surface,
 };
 
-use crate::arguments::output::OutputFormat;
+use crate::arguments::{Resolution, output::OutputFormat};
 
 pub mod arguments;
 
@@ -117,17 +117,14 @@ fn load_scene(surface: &Surface, camera_origin: Option<glam::Vec3>) -> Result<Sc
 
 pub fn run(args: arguments::Args) -> Result<()> {
     // Set up
-    let width = args.resolution_x.unwrap_or(1920);
-    let height = args.resolution_y.unwrap_or(1080);
-    let mut surface = Surface::new(width, height);
+    let resolution = args.resolution.unwrap_or(Resolution {
+        width: 1920,
+        height: 1080,
+    });
+    let mut surface = Surface::new(resolution.width, resolution.height);
 
     // Render
-    let camera_option =
-        if let (Some(x), Some(y), Some(z)) = (args.camera_x, args.camera_y, args.camera_z) {
-            Some(glam::Vec3::new(x, y, z))
-        } else {
-            None
-        };
+    let camera_option = args.camera_origin.map(|c| c.0);
 
     let scene = if args.debug {
         debug_scene(&surface)

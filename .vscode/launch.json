@@ -20,7 +20,18 @@
       "cargo": {
         "args": ["run", "--bin=cli", "--package=cli"]
       },
-      "args": ["-f", "jpeg-xl", "-r", "cpu-ray-tracer"]
+      "args": [
+        "-f",
+        "jpeg-xl",
+        "-r",
+        "cpu-ray-tracer",
+        "--camera-origin",
+        "2,0,0",
+        "--resolution",
+        "1x1",
+        "-o",
+        "render.jxl"
+      ]
     },
     {
       "name": "Debug unit tests in library 'cli'",

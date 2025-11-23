@@ -65,6 +65,7 @@ impl Camera {
         (self.view + ndc.x * self.right + ndc.y * self.up).normalize()
     }
 
+    #[inline]
     pub fn origin(&self) -> glam::Vec3 {
         self.origin
     }
