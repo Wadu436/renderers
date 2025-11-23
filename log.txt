@@ -1,0 +1,8 @@
+WARNING: unrecognized line: "mtllib default.mtl"
+WARNING: unrecognized line: "usemtl default"
+None triangle intersection
+None triangle intersection
+Some triangle intersection
+Some triangle intersection
+None triangle intersection
+Some triangle intersection
