@@ -1,9 +1,12 @@
+use glam::Vec2;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Intersection {
     pub t: f32,
     #[allow(dead_code)]
     pub point: glam::Vec3,
     pub normal: glam::Vec3,
+    pub uv: glam::Vec2,
 }
 
 pub trait Intersect {
@@ -52,6 +55,9 @@ impl Intersect for common::model::triangle::Triangle {
                 t,
                 point,
                 normal: self.v1.normal * (1.0 - u - v) + self.v2.normal * u + self.v3.normal * v,
+                uv: self.v1.uv.unwrap_or(Vec2::ZERO) * (1.0 - u - v)
+                    + self.v2.uv.unwrap_or(Vec2::ZERO) * u
+                    + self.v3.uv.unwrap_or(Vec2::ZERO) * v,
             })
         } else {
             // println!("None triangle intersection");

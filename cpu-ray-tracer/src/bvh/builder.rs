@@ -202,7 +202,7 @@ fn split_along_optimal_axis(
             BoundingBox::from_iter(indices_right.iter().map(|&i| &primitives[i].bounding_box));
         let score = bounding_box_left.area() + bounding_box_right.area();
         if score < best_score {
-            // best_score = score;
+            best_score = score;
             best_indices = Some((indices_left, indices_right));
         }
     }

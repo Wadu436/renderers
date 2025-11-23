@@ -2,7 +2,7 @@ use core::f32;
 use std::{cell::RefCell, num::NonZero};
 
 use common::model::triangle::Triangle;
-use glam::Vec3;
+use glam::{Vec2, Vec3};
 
 use crate::{
     bvh::bounding_box::BoundingBox,
@@ -48,6 +48,7 @@ impl Bvh {
             t: f32::INFINITY,
             point: Vec3::ZERO,
             normal: Vec3::ZERO,
+            uv: Vec2::ZERO,
         };
 
         // Intersect the root node

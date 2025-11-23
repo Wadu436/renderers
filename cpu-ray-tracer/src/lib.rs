@@ -70,7 +70,12 @@ impl CpuRayTracer {
                 if let Some(intersection) = self.bvh.intersect(&ray) {
                     // Simple shading based on angle to lightray
                     let intensity = intersection.normal.dot(-ray.direction()).clamp(0.0, 1.0);
-                    *surface.get_mut(x, y) = (glam::Vec3::ONE * intensity).into();
+                    let color = ((intersection.uv.x * 16.0).round()
+                        + (intersection.uv.y * 16.0).round())
+                        % 2.0;
+
+                    *surface.get_mut(x, y) =
+                        (glam::Vec3::ONE * (0.5 + color / 2.0) * intensity).into();
                 }
             }
         }
